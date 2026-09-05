@@ -28,5 +28,6 @@ except:
 draw.text((size//2, 200), "8528", fill=(255, 255, 255, 255), font=font, anchor="mm")
 
 output = os.path.join(os.path.dirname(__file__), "fnos", "ui", "icon.png")
+os.makedirs(os.path.dirname(output), exist_ok=True)
 img.save(output)
 print(f"Icon saved to {output}")
