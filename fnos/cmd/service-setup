@@ -1,0 +1,155 @@
+#!/bin/bash
+# qnap8528-kmod FPK service-setup
+# Reference: fnos-i915-sriov-kmod
+
+MODULE_NAME="qnap8528"
+MODULE_VERSION="1.24"
+SRC_DIR="${SYNOPKG_PKGDEST}/app/qnap8528-src"
+DKMS_SRC="/usr/src/${MODULE_NAME}-${MODULE_VERSION}"
+KVER_FILE="/etc/qnap8528-kver"
+MODPROBE_CONF="/etc/modprobe.d/qnap8528.conf"
+AUTOLOAD_CONF="/etc/modules-load.d/qnap8528.conf"
+
+log() {
+    echo "[qnap8528-kmod] $1" >&2
+}
+
+check_kernel_headers() {
+    if [ ! -d "/lib/modules/$(uname -r)/build" ]; then
+        log "错误: 当前内核头文件缺失，无法编译驱动。"
+        log "请先执行: apt update && apt install -y linux-headers-$(uname -r)"
+        return 1
+    fi
+    return 0
+}
+
+service_postinst() {
+    log "开始安装 qnap8528 驱动..."
+
+    # 1. 检查编译工具链
+    check_kernel_headers || exit 1
+
+    # 2. 复制源码到 /usr/src（DKMS 要求）
+    if [ -d "${DKMS_SRC}" ]; then
+        rm -rf "${DKMS_SRC}"
+    fi
+    cp -r "${SRC_DIR}" "${DKMS_SRC}"
+
+    # 3. DKMS 注册并编译安装
+    dkms add -m "${MODULE_NAME}" -v "${MODULE_VERSION}" || {
+        log "dkms add 失败"
+        exit 1
+    }
+
+    dkms install --force "${MODULE_NAME}/${MODULE_VERSION}" || {
+        log "dkms install 失败，请检查 dmesg 和 /var/lib/dkms/qnap8528/${MODULE_VERSION}/build/make.log"
+        exit 1
+    }
+
+    # 4. 根据 wizard 参数生成 modprobe 配置
+    > "${MODPROBE_CONF}"
+    local opts=""
+    if [ "${wizard_skip_hw_check}" = "true" ]; then
+        opts="${opts} skip_hw_check=1"
+        log "已启用 skip_hw_check"
+    fi
+    if [ "${wizard_blink_sw_only}" = "true" ]; then
+        opts="${opts} blink_sw_only=1"
+        log "已启用 blink_sw_only"
+    fi
+    if [ "${wizard_preserve_leds}" = "true" ]; then
+        opts="${opts} preserve_leds=1"
+        log "已启用 preserve_leds"
+    fi
+    if [ -n "${opts}" ]; then
+        echo "options ${MODULE_NAME} ${opts}" > "${MODPROBE_CONF}"
+    fi
+
+    # 5. 设置开机自加载
+    echo "${MODULE_NAME}" > "${AUTOLOAD_CONF}"
+
+    # 6. 刷新模块依赖
+    depmod -a
+
+    # 7. 记录当前内核版本
+    uname -r > "${KVER_FILE}"
+
+    log "qnap8528 驱动安装完成"
+    return 0
+}
+
+service_postuninst() {
+    log "开始卸载 qnap8528 驱动..."
+
+    # 1. 先卸载模块
+    if lsmod | grep -q "^${MODULE_NAME}"; then
+        modprobe -r "${MODULE_NAME}" 2>/dev/null || true
+    fi
+
+    # 2. DKMS 移除
+    if dkms status | grep -q "${MODULE_NAME}/${MODULE_VERSION}"; then
+        dkms remove "${MODULE_NAME}/${MODULE_VERSION}" --all || true
+    fi
+
+    # 3. 清理源码
+    rm -rf "${DKMS_SRC}"
+
+    # 4. 清理配置文件
+    rm -f "${MODPROBE_CONF}"
+    rm -f "${AUTOLOAD_CONF}"
+    rm -f "${KVER_FILE}"
+
+    # 5. 刷新
+    depmod -a
+
+    log "qnap8528 驱动已卸载"
+    return 0
+}
+
+service_start() {
+    # 内核变化检测
+    if [ -f "${KVER_FILE}" ]; then
+        local installed_kver=$(cat "${KVER_FILE}")
+        local current_kver=$(uname -r)
+        if [ "${installed_kver}" != "${current_kver}" ]; then
+            log "警告: 内核已变更 (${installed_kver} -> ${current_kver})，请卸载后重新安装本应用。"
+            return 1
+        fi
+    fi
+
+    # 加载模块
+    if ! lsmod | grep -q "^${MODULE_NAME}"; then
+        modprobe "${MODULE_NAME}" || {
+            log "modprobe 加载失败，请检查 dmesg"
+            return 1
+        }
+        log "qnap8528 模块已加载"
+    else
+        log "qnap8528 模块已在运行"
+    fi
+    return 0
+}
+
+service_stop() {
+    if lsmod | grep -q "^${MODULE_NAME}"; then
+        modprobe -r "${MODULE_NAME}" || {
+            log "modprobe -r 卸载失败"
+            return 1
+        }
+        log "qnap8528 模块已卸载"
+    fi
+    return 0
+}
+
+daemon_status() {
+    # 内核变化检测 -> 视为未运行
+    if [ -f "${KVER_FILE}" ]; then
+        local installed_kver=$(cat "${KVER_FILE}")
+        local current_kver=$(uname -r)
+        if [ "${installed_kver}" != "${current_kver}" ]; then
+            return 1
+        fi
+    fi
+    lsmod | grep -q "^${MODULE_NAME}"
+    return $?
+}

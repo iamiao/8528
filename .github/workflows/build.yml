@@ -1,0 +1,38 @@
+name: Build FPK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pil
+
+    - name: Generate icon
+      run: python3 gen_icon.py
+
+    - name: Build FPK
+      run: ./build.sh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: qnap8528-kmod-fpk
+        path: '*.fpk'
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: '*.fpk'
+        generate_release_notes: true

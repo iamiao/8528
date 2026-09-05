@@ -1,0 +1,9 @@
+{
+    "name": "qnap8528-kmod",
+    "version": "1.24.0",
+    "author": "0xGiddi / FPK repack",
+    "description": "QNAP IT8528 EC driver for fnOS. Enables fan control, temperature sensors, LEDs, buttons and VPD on QNAP devices.",
+    "architecture": "x86_64",
+    "firmware": "0.8.0",
+    "package": "qnap8528-kmod_1.24.0_x86.fpk"
+}

@@ -1,0 +1,28 @@
+{
+    "type": "install",
+    "title": "qnap8528 驱动安装配置",
+    "description": "请根据你的 QNAP 机型选择参数。如果不确定，保持默认即可。",
+    "fields": [
+        {
+            "key": "skip_hw_check",
+            "type": "checkbox",
+            "label": "跳过硬件检测 (skip_hw_check)",
+            "description": "强制加载驱动，忽略 VPD 中的机型白名单。TS-464、TS-664 等部分机型必须勾选。",
+            "default": false
+        },
+        {
+            "key": "blink_sw_only",
+            "type": "checkbox",
+            "label": "仅软件控制 LED 闪烁 (blink_sw_only)",
+            "description": "禁用硬件 LED 闪烁，改用软件模拟。",
+            "default": false
+        },
+        {
+            "key": "preserve_leds",
+            "type": "checkbox",
+            "label": "保留当前 LED 状态 (preserve_leds)",
+            "description": "加载驱动时不重置 LED 状态。",
+            "default": false
+        }
+    ]
+}

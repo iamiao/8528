@@ -1,0 +1,16 @@
+{
+    "id": "qnap8528-kmod",
+    "name": "qnap8528 驱动",
+    "version": "1.24.0",
+    "author": "0xGiddi",
+    "description": "QNAP IT8528 EC 内核驱动，支持风扇控制、温度传感器、LED、按键和 VPD 读取。安装前请确认机型在支持列表中。",
+    "architecture": "x86_64",
+    "category": "driver",
+    "icon": "ui/icon.png",
+    "privilege": "config/privilege",
+    "resource": "config/resource",
+    "cmd": "cmd/service-setup",
+    "wizard": [
+        "wizard/install.json"
+    ]
+}
