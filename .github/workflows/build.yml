@@ -22,7 +22,7 @@ jobs:
       run: python3 gen_icon.py
 
     - name: Build FPK
-      run: ./build.sh
+      run: bash build.sh
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
