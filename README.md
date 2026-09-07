@@ -33,7 +33,7 @@
 ### 2. 手动打包
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/fnos-qnap8528-kmod.git
+git clone https://github.com/iamiao/qnap8528.git
 cd fnos-qnap8528-kmod
 ./build.sh
 ```
