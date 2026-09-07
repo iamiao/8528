@@ -27,7 +27,16 @@ except:
 
 draw.text((size//2, 200), "8528", fill=(255, 255, 255, 255), font=font, anchor="mm")
 
-output = os.path.join(os.path.dirname(__file__), "fnos", "ui", "icon.png")
-os.makedirs(os.path.dirname(output), exist_ok=True)
-img.save(output)
-print(f"Icon saved to {output}")
+ui_dir = os.path.join(os.path.dirname(__file__), "fnos", "ui")
+os.makedirs(ui_dir, exist_ok=True)
+images_dir = os.path.join(ui_dir, "images")
+os.makedirs(images_dir, exist_ok=True)
+with open(os.path.join(ui_dir, "config"), "w", encoding="ascii") as config_file:
+    config_file.write("{}\n")
+resampling = getattr(Image, "Resampling", Image)
+icon_64 = img.resize((64, 64), resampling.LANCZOS)
+icon_64.save(os.path.join(os.path.dirname(__file__), "fnos", "ICON.PNG"))
+icon_64.save(os.path.join(images_dir, "64.png"))
+img.save(os.path.join(os.path.dirname(__file__), "fnos", "ICON_256.PNG"))
+img.save(os.path.join(images_dir, "256.png"))
+print(f"Icons saved to {ui_dir}")
