@@ -28,7 +28,7 @@
 
 ### 1. 下载预编译 FPK
 
-在 [Releases](https://github.com/YOUR_USERNAME/8528/releases) 页面下载最新 `.fpk` 文件。
+在 [Releases](https://github.com/iamiao/8528/releases) 页面下载最新 `.fpk` 文件。
 
 ### 2. 手动打包
 
